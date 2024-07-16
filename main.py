@@ -49,3 +49,42 @@ def seed_everything(seed):
     torch.backends.cudnn.benchmark = True
 
 seed_everything(CONFIG.SEED)  # Seed 고정
+
+
+
+# 데이터 전처리 수행 과정들 아래로 쭉
+
+# 모델을 훈련하기 전에 전체 데이터 세트를 두 개의 서브셋으로 나눠준다. 학습 데이터 세트와 검증 데이터 세트
+df = pd.read_csv('./train.csv')
+train, val, _, _ = train_test_split(df, df['label'], test_size=0.2, random_state=CONFIG.SEED)
+
+
+# MRCC 특징을 추출하고, 이를 학습에 사용할 형식으로 변환하는 함수
+def get_mfcc_feature(df, train_mode=True):
+    features = []
+    labels = []
+    for _, row in tqdm(df.iterrows()):
+        # Librosa 패키지를 사용하여 wav 파일 Load
+        y, sr = librosa.load(row['path'], sr=CONFIG.SR)  # row['path']에 해당하는 오디오 파일 로드, 샘플링 레이트는 CONFIG.SR로 지정됨
+
+        # Librosa 패키지를 사용하여 mfcc 추출
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=CONFIG.N_MFCC)  # 오디오 신호 y로부터 MFXX 특징을 추출함, CONFIG.N_MFCC는 추출할 MFCC 계수를 지정함
+        # 추출된 MFCC는 프레임별로 계산되므로, 각 프레임의 평균값을 구하여 전체 파일에 대한 MFCC 특징을 대표하는 벡터를 얻는다.
+        mfcc = np.mean(mfcc.T, axis=0)
+        features.append(mfcc)
+
+        # train_mode = True인 경우, 현재 행의 레이블을 읽어와 CONFIG.N_CLASSES 길이의 벡터로 변환한다.
+        # 레이블이 'fake'이면 첫 번째 원소를 1로, 'real'이면 두 번째 원소를 1로 설정한다.
+        # 이 벡터를 labels 리스트에 추가한다.
+        if train_mode:
+            label = row['label']
+            label_vector = np.zeros(CONFIG.N_CLASSES, dtype=float)
+            label_vector[0 if label == 'fake' else 1] = 1
+            labels.append(label_vector)
+
+    if train_mode:
+        return features, labels
+    return features
+
+train_mfcc, train_labels = get_mfcc_feature(train, True)
+val_mfcc, val_labels = get_mfcc_feature(val, True)
