@@ -34,3 +34,18 @@ class Config:
     SEED = 42  # 재현성을 위해 SEED 값을 고정하는 SEED를 설정해줌
 
 CONFIG = Config()
+
+
+
+# 머신러닝이나 딥러닝 모델을 훈련할 때, 결과의 재현성을 보장하기 위해 사용되는 함수
+# 다양한 랜덤 시드를 고정하여, 실행할 때마다 동일한 결과를 얻기 위해 사용
+def seed_everything(seed):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
+
+seed_everything(CONFIG.SEED)  # Seed 고정
