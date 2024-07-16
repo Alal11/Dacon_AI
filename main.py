@@ -107,3 +107,10 @@ class CustomDataset(Dataset):
         return self.mfcc[index]
     
 
+# DataLoader는 구출된 데이터셋에서 배치크기(batch_size)에 맞게 데이터를 추출하고, 필요에 따라 섞거나(shuffle=True) 순서대로 반환(shuffle=False)하는 역할을 한다.
+train_dataset = CustomDataset(train_mfcc, train_labels)
+val_dataset = CustomDataset(val_mfcc, val_labels)
+
+train_loader = DataLoader(train_dataset, batch_size=CONFIG.BATCH_SIZE, shuffle=True)  # 훈련 데이터
+val_loader = DataLoader(val_dataset, batch_size=CONFIG.BATCH_SIZE, shuffle=False)  # 검증 데이터
+
