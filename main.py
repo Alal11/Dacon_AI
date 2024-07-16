@@ -88,3 +88,22 @@ def get_mfcc_feature(df, train_mode=True):
 
 train_mfcc, train_labels = get_mfcc_feature(train, True)
 val_mfcc, val_labels = get_mfcc_feature(val, True)
+
+
+
+# PyTorch의 Dataset 클래스를 상속받아 데이터 로딩과 관련된 과정을 관리하는 클래스
+class CustomDataset(Dataset):
+    def __init__(self, mfcc, label):
+        self.mfcc = mfcc  # 오디오 파일에서 추출한 MFCC 특징들의 리스트
+        self.label = label  # 해당 오디오 파일의 레이블 리스트, 레이블이 없는 경우 None이 될 수 있음
+
+    def __len__(self):
+        return len(self.mfcc)  # 데이터셋의 총 데이터 개수를 반환, 주어진 MFCC 리스트의 길이와 동일함
+    
+    # 주어진 인덱스에 해당하는 데이터를 데이터셋에서 불러와 반환, 레이블이 있는 경우 MFCC와 레이블을 함께 반환하고, 없는 경우 MFCC만 반환
+    def __getitem__(self, index):
+        if self.label is not None:
+            return self.mfcc[index], self.label[index]
+        return self.mfcc[index]
+    
+
