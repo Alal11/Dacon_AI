@@ -215,3 +215,42 @@ def validation(model, criterion, val_loader, device):
 
 
 
+# Run : 모델을 초기화하고, 옵티마이저를 설정한 다음, 모델 훈련 함수를 호출하여 실제로 훈련 과정을 실행하는 단계
+model = MLP()
+optimizer = torch.optim.Adam(params=model.parameters(), lr=CONFIG.LR)
+
+infer_model = train(model, optimizer, train_loader, val_loader, device)  # 학습 후 가장 좋은 성능을 보인 모델
+
+
+
+# test 데이터 준비
+test = pd.read_csv('./test')
+test_mfcc = get_mfcc_feature(test, False)
+test_dataset = CustomDataset(test_mfcc, None)
+test_loader = DataLoader(test_dataset, batch_size=CONFIG.BATCH_SIZE, shuffle=False)
+
+# 예측 수행
+def inference(model, test_loader, device):
+    model.to(device)
+    model.eval()
+    predictions = []
+    with torch.no_grad():
+        for features in tqdm(iter(test_loader)):
+            features = features.float().to(device)
+
+            probs = model(features)  # 모델 예측 확률 계산
+
+            probs = probs.cpu().detach().numpy()
+            predictions += probs.tolist()
+            return predictions  # 예측 확률 리스트
+
+preds = inference(infer_model, test_loader, device)
+
+
+
+# 추론 결과를 제출 양식에 덮어 씌워 CSV 파일로 생성하는 과정
+submit = pd.read_csv('./sample_submission.csv')
+submit.iloc[:, 1:] = preds
+submit.head()
+
+submit.to_csv('./baseline_submit.csv', index=False)
