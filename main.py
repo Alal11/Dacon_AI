@@ -114,3 +114,25 @@ val_dataset = CustomDataset(val_mfcc, val_labels)
 train_loader = DataLoader(train_dataset, batch_size=CONFIG.BATCH_SIZE, shuffle=True)  # 훈련 데이터
 val_loader = DataLoader(val_dataset, batch_size=CONFIG.BATCH_SIZE, shuffle=False)  # 검증 데이터
 
+
+
+# MLP 모델은 여러 층의 노드로 구성되며 각 노드를 입력값과 가중치를 통해 계산된 값을 출력으로 전달한다. 일반적으로 입력층, 은닉층, 출력층으로 구성된다.
+class MLP(nn.Module):
+    # input_dim : MFCC의 개수
+    # hidden_dim : 은닉층의 차원 수
+    # output_dim : 분류할 클래스의 수
+    def __init__(self, input_dim=CONFIG.N_MFCC, hidden_dim=128, output_dim=CONFIG.N_CLASSES):
+        super(MLP, self).__init__()
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, output_dim)
+        self.relu = nn.ReLU()
+
+    # 입력 데이터를 순차적으로 세 개의 선형 계층과 ReLU 활성화 함수를 거쳐 최종적으로 시그모이드 함수를 적용하여 출력 확률을 계산
+    def forward(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        x = self.fc3(x)
+        x = torch.sigmoid(x)
+        return x
+    
